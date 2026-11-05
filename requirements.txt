@@ -1,0 +1,2 @@
+numpy>=1.26
+anthropic>=0.40  # optional: only for the API-key path of the assistant

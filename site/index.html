@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FreshCast — how it works</title>
+<style>
+:root{color-scheme:light;--bg:#f9f9f7;--card:#fff;--ink:#0b0b0b;--ink2:#52514e;--mute:#898781;--line:#e1e0d9;--blue:#2a78d6;--orange:#eb6834;--gray:#b5b3ab;--navy:#0d366b;--red:#d03b3b}
+*{box-sizing:border-box}html{scroll-snap-type:y proximity;scroll-behavior:smooth;scroll-padding-top:56px}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.top{position:fixed;top:0;left:0;right:0;height:56px;background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:0 24px;z-index:10}
+.top b{flex:1;font-size:15px}.top select,.top button{font:inherit;font-size:14px;padding:6px 10px;border-radius:7px;border:0;cursor:pointer;background:#fff;color:var(--ink)}
+.top .seg button{background:#28508a;color:#fff}.top .seg button.on{background:#fff;color:var(--navy);font-weight:600}.top .seg button.storm.on{background:var(--red);color:#fff}
+section{min-height:100vh;scroll-snap-align:start;padding:84px 8vw 48px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+h1{font-size:50px;line-height:1.1;margin:0 0 16px}h2{font-size:32px;margin:0 0 10px;line-height:1.2}h3{font-size:16px;margin:0 0 6px}
+.lead{font-size:19px;color:var(--ink2);max-width:900px;margin:0 0 22px}
+.row{display:grid;gap:16px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}.c5{grid-template-columns:repeat(5,1fr)}.w{grid-template-columns:1.25fr 1fr}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.big{font-size:38px;font-weight:700;line-height:1.1}.sub{color:var(--ink2);font-size:14px}.muted{color:var(--mute);font-size:13px}
+.chip{display:inline-block;background:#f0efec;border-radius:14px;padding:3px 10px;margin:3px 4px 3px 0;font-size:13px}
+nav{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:9}
+nav a{width:10px;height:10px;border-radius:50%;background:#c3c2b7;display:block}nav a.on{background:var(--navy);transform:scale(1.35)}
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}.flow .box{flex:1;min-width:140px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px}
+.flow .box b{display:block;font-size:13px;color:var(--blue);margin-bottom:3px}.flow .arr{align-self:center;padding:0 6px;color:var(--mute);font-size:22px}
+.flow a{color:inherit;text-decoration:none}.flow .box:hover{border-color:var(--blue)}
+code,.f{font-family:ui-monospace,Consolas,monospace;font-size:13.5px;background:#f0efec;border-radius:6px;padding:2px 6px}
+.formula{font-family:ui-monospace,Consolas,monospace;font-size:14px;background:#f4f3ef;border-radius:8px;padding:12px 14px;line-height:1.8;margin:8px 0}
+.banner{background:#fde8e8;color:#8a1c1c;border-radius:8px;padding:9px 14px;font-weight:600;margin-bottom:12px;display:none}
+.act{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.act:first-child{border-top:0}
+.tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;color:#fff;height:fit-content;min-width:78px;text-align:center}
+.Storm{background:var(--red)}.Order{background:var(--blue)}.Markdown{background:var(--orange)}.Donate{background:#1baf7a}
+.scroll{max-height:440px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}th{font-size:12px;color:var(--mute);text-align:left;font-weight:600}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line)}td.n{font-variant-numeric:tabular-nums;text-align:right}#tbl tr{cursor:pointer}#tbl tr:hover,tr.sel{background:#eef4fc}
+.bars .b{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:14px}.bars .lab{width:150px;flex:none}.bars .bar{height:15px;border-radius:0 4px 4px 0;flex:none}
+.legend{font-size:13px;color:var(--ink2);display:flex;gap:16px;margin-top:6px;flex-wrap:wrap}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--mute);font-size:11px}
+.chat{display:flex;gap:10px}.chat input{flex:1;font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line)}.chat button,.seg2 button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.seg2 button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.msg{padding:10px 14px;border-radius:10px;margin:8px 0;max-width:85%}.me{background:#eef4fc;margin-left:auto}.bot{background:#fff;border:1px solid var(--line)}
+.stepno{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-weight:700;font-size:15px;margin-right:10px;vertical-align:4px}
+ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+@media(max-width:1000px){.c2,.c3,.c4,.c5,.w{grid-template-columns:1fr}h1{font-size:34px}}
+</style></head><body>
+<div class="top"><b>FreshCast · Fresh, Not Wasted</b><span style="font-size:13px;opacity:.8">Live data:</span><select id="store"></select>
+ <div class="seg"><button id="bN" class="on">Normal day</button><button id="bS" class="storm">Winter storm + 48h truck delay</button></div></div>
+<nav id="nav"></nav>
+
+<!-- 0 -->
+<section id="intro">
+ <div class="eyebrow">Group 3 · Fresh, Not Wasted</div>
+ <h1>A forecasting system that tells each store how much fresh food to stock.</h1>
+ <p class="lead">Stores lose money two ways on fresh food: ordering too much (it spoils) and ordering too little (empty shelves). FreshCast predicts demand for every item in every store, turns that into an order, and tells staff what to mark down or donate before it goes to waste. This page walks through how it works, one step at a time, using the running prototype.</p>
+ <div class="row c3" id="hero"></div>
+ <p class="muted" style="margin-top:12px">Results from a test on 4 weeks the model never saw, compared with a simple "order what sold the same weekday last week + 10%" rule. Simulated data: 3 stores, 24 fresh items, about 3 years of daily sales. Use the store and scenario controls at the top. Every live section updates.</p>
+</section>
+
+<!-- overview -->
+<section id="overview">
+ <div class="eyebrow">System overview</div><h2>Seven steps, run every night for every item in every store</h2>
+ <p class="lead">Each step feeds the next. Click a step to jump to it.</p>
+ <div class="flow">
+  <a class="box" href="#s1"><b>1 · Data</b>Sales, stock by expiry date, weather, trucks, trends</a><span class="arr">→</span>
+  <a class="box" href="#s2"><b>2 · Features</b>Turn raw data into signals the model can use</a><span class="arr">→</span>
+  <a class="box" href="#s3"><b>3 · Forecast</b>One model per product: expected sales + range</a><span class="arr">→</span>
+  <a class="box" href="#s4"><b>4 · Order</b>How much to stock, given costs and stock on hand</a><span class="arr">→</span>
+  <a class="box" href="#s5"><b>5 · Surplus</b>Markdowns, then food bank pickups</a><span class="arr">→</span>
+  <a class="box" href="#s6"><b>6 · Staff time</b>Minutes per task → hours needed</a><span class="arr">→</span>
+  <a class="box" href="#s7"><b>7 · Manager plan</b>To-do list + assistant</a>
+ </div>
+ <div class="row c2" style="margin-top:22px">
+  <div class="card"><h3>Built in this prototype</h3><ul class="sub"><li>Data simulator (Python + NumPy)</li><li>Per-product forecasting models</li><li>Ordering, markdown, donation and staffing logic</li><li>Storm mode for the case twist</li><li>Back-test against the current rule</li><li>This website, plus an assistant that answers with Claude</li></ul></div>
+  <div class="card"><h3>How to run it</h3><div class="formula">.venv\Scripts\python.exe server.py<br>→ open http://localhost:8000</div><p class="muted">Everything runs on one laptop. No cloud services needed.</p></div>
+ </div>
+</section>
+
+<!-- 1 data -->
+<section id="s1">
+ <div class="eyebrow">Step 1</div><h2><span class="stepno">1</span>Collect the data</h2>
+ <p class="lead">The model is only as good as what it sees. A real store already produces most of this. Our prototype simulates each source so we could build and test the full system.</p>
+ <div class="row c3">
+  <div class="card"><h3>Sales</h3><p class="sub">Point-of-sale data per item, per store, per day.</p><p class="muted">Key fix: when a shelf goes empty at 3 PM, sales understate real demand. Shelf cameras record when it ran out, so we can estimate what would have sold.</p></div>
+  <div class="card"><h3>Stock by expiry date</h3><p class="sub">Date-coded barcodes or RFID tags show not just "40 units" but "12 expire tomorrow".</p><p class="muted">Needed for markdowns and donations.</p></div>
+  <div class="card"><h3>Calendar and promotions</h3><p class="sub">Holidays, paydays, planned price cuts.</p><p class="muted">Known in advance, so they're the most reliable signals.</p></div>
+  <div class="card"><h3>Weather and storm alerts</h3><p class="sub">Temperature forecasts and National Weather Service warnings.</p><p class="muted">Storms cause a buying rush before and a drop during.</p></div>
+  <div class="card"><h3>Trucks</h3><p class="sub">Delivery schedule and delay status from truck GPS.</p><p class="muted">Tells the model how many days the stock has to last.</p></div>
+  <div class="card"><h3>Social media trends</h3><p class="sub">How often a food topic is being posted about, tracked over time.</p><p class="muted">Example: "Dubai chocolate" posts → more strawberry sales a few days later.</p></div>
+ </div>
+</section>
+
+<!-- 2 features -->
+<section id="s2">
+ <div class="eyebrow">Step 2</div><h2><span class="stepno">2</span>Turn data into features</h2>
+ <p class="lead">A feature is one input the model can learn from. Each row of training data is <code>one product × one store × one day</code>, described by these features:</p>
+ <div class="row w">
+  <div class="card"><table><tr><th>Feature group</th><th>What it captures</th></tr>
+   <tr><td>Day of week</td><td>Saturdays are busy, Tuesdays are slow</td></tr>
+   <tr><td>Time of year</td><td>Strawberries peak in early summer, baking items in winter</td></tr>
+   <tr><td><b>Holiday markers</b></td><td>5 windows per holiday: 6–10 days before, 3–5 days before, 1–2 days before (peak), the day itself, 1–2 days after (dip)</td></tr>
+   <tr><td>Weather</td><td>Temperature vs. normal for the season</td></tr>
+   <tr><td>Promotion</td><td>Item on sale that day</td></tr>
+   <tr><td>Storm phase</td><td>2 days before, 1 day before, storm day, 1 and 2 days after</td></tr>
+   <tr><td>Social trend</td><td>Trend score of the topic linked to this product</td></tr>
+   <tr><td>Long-term growth</td><td>Slow change in store traffic over years</td></tr></table></div>
+  <div class="card"><h3>Holidays coming up (live)</h3><div id="ev"></div><p class="muted">"×4" = about 4 times normal sales at the peak. Each product learns its own response to each holiday.</p></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Social trends being tracked (live)</h3><div class="row c2" id="tr"></div></div>
+</section>
+
+<!-- 3 forecast -->
+<section id="s3">
+ <div class="eyebrow">Step 3</div><h2><span class="stepno">3</span>Forecast demand, one model per product</h2>
+ <p class="lead">Each product gets its own model, because a turkey and a banana react very differently to the same day. The model gives a best guess and a range: the margin of error.</p>
+ <div class="row w">
+  <div class="card"><h3 id="ptitle"></h3><div id="chart"></div>
+   <div class="legend"><span><span class="sw" style="background:var(--blue)"></span>Actual sales, last 6 weeks</span><span><span class="sw" style="background:var(--orange)"></span>Forecast, next 14 days</span><span><span class="sw" style="background:#f9d2c1"></span>Likely range (80%)</span></div>
+   <div class="controls" style="margin-top:10px"><span class="muted">Product: </span><select id="psel"></select></div></div>
+  <div class="card"><h3>Why tomorrow's number is what it is</h3><div class="bars" id="drivers"></div>
+   <h3 style="margin-top:16px">How the model works</h3>
+   <ul class="sub"><li>Model: regression on the log of sales, so effects multiply (e.g. "Saturday ×1.25" and "Thanksgiving week ×4").</li>
+   <li>Trained on all history up to last night, about 1,000 days per product per store.</li>
+   <li>Range: taken from how far off the model was on past days (10th to 90th percentile).</li>
+   <li>Production version: same features with gradient-boosted trees (LightGBM).</li></ul>
+   <p class="muted" id="perr"></p></div>
+ </div>
+</section>
+
+<!-- 4 order -->
+<section id="s4">
+ <div class="eyebrow">Step 4</div><h2><span class="stepno">4</span>Decide how much to stock</h2>
+ <p class="lead">The forecast says what's likely. The order also depends on which mistake costs more for that item: running out or throwing food away.</p>
+ <div class="row c2">
+  <div class="card"><h3>The rule</h3>
+   <div class="formula">target in-stock level = cost of running out ÷ (cost of running out + cost of waste)<br>
+   stock target = expected sales + z(target) × uncertainty<br>
+   order = stock target − usable stock on hand → round to cases</div>
+   <ul class="sub"><li><b>Cost of running out</b> = lost profit, plus a penalty for staples like milk and bread.</li>
+   <li><b>Cost of waste</b> = what we paid, minus what markdowns and donations recover.</li>
+   <li><b>Usable stock</b> = units that won't expire before they can sell.</li>
+   <li>Normal day: cover until tomorrow's truck. Storm: cover until trucks return.</li></ul></div>
+  <div class="card"><h3>Worked example (live): <span id="wxname"></span></h3><div id="wx"></div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>All products, this store</h3><div class="scroll" style="max-height:300px"><table><thead><tr><th>Product</th><th>On hand</th><th>Usable</th><th>Expected sales</th><th>Likely range</th><th>Target in-stock</th><th>Order</th></tr></thead><tbody id="tbl"></tbody></table></div><p class="muted">Click a row to load it into the example and the forecast chart.</p></div>
+</section>
+
+<!-- 5 surplus -->
+<section id="s5">
+ <div class="eyebrow">Step 5</div><h2><span class="stepno">5</span>Deal with surplus before it spoils</h2>
+ <p class="lead">For every batch expiring today or tomorrow, the system compares units on the shelf with the units expected to sell first (oldest stock sells first).</p>
+ <div class="row c3" style="margin-bottom:16px">
+  <div class="card"><h3>1. Predict leftovers</h3><p class="sub">Leftover = batch size − (expected sales before expiry − older stock ahead of it).</p></div>
+  <div class="card"><h3>2. Mark down</h3><p class="sub">If at least 15% of the batch is likely left over: 30% off, or 50% if more than half is likely left over.</p></div>
+  <div class="card"><h3>3. Donate the rest</h3><p class="sub">The nearest partner that can take that food type (meat needs cold storage) is notified today for a 9 AM pickup.</p></div>
+ </div>
+ <div class="row c2"><div class="card"><h3>Markdowns today (live)</h3><div id="md"></div></div>
+ <div class="card"><h3>Food bank pickups (live)</h3><div id="don"></div></div></div>
+</section>
+
+<!-- 6 labor -->
+<section id="s6">
+ <div class="eyebrow">Step 6</div><h2><span class="stepno">6</span>Plan staff time</h2>
+ <p class="lead">Every action becomes minutes of work, so a manager knows how many people to put on fresh tasks today.</p>
+ <div class="row c2"><div class="card"><h3>Hours needed today (live)</h3><div class="bars" id="labor"></div></div>
+ <div class="card"><h3>Time per task (assumptions)</h3><table><tr><th>Task</th><th>Minutes</th></tr>
+  <tr><td>Receive and stock one case</td><td class="n">4.0</td></tr><tr><td>Rotate and check dates, per case on hand</td><td class="n">0.4</td></tr>
+  <tr><td>Markdown: per batch + per unit</td><td class="n">2.0 + 0.15</td></tr><tr><td>Donation: per unit + per pickup</td><td class="n">0.3 + 10</td></tr>
+  <tr><td>Storm prep: per essential item</td><td class="n">12</td></tr></table>
+  <p class="muted">In a pilot, these would come from the store's own time studies.</p></div></div>
+</section>
+
+<!-- 7 manager plan -->
+<section id="s7">
+ <div class="eyebrow">Step 7</div><h2><span class="stepno">7</span>The manager's plan: everything in one list</h2>
+ <div class="banner" id="banner">Storm warning for tomorrow. Supplier trucks delayed 48 hours. The plan now has to cover today through Saturday with the stock already in the store.</div>
+ <div class="row c5" id="kpis" style="margin-bottom:14px"></div>
+ <div class="row w"><div class="card"><h3>To-do list, in priority order</h3><div class="scroll" id="acts"></div></div>
+ <div class="card"><h3>Ask about the plan</h3><p class="muted">Answered by Claude using this store's plan. Takes about 20 seconds.</p><div id="log" class="scroll" style="max-height:260px"></div>
+  <div class="chat"><input id="q" placeholder="e.g. Why are we ordering strawberries?"><button id="ask">Ask</button></div>
+  <div style="margin-top:8px" id="sugg"><span class="chip" style="cursor:pointer">Why are we ordering strawberries?</span><span class="chip" style="cursor:pointer">What should we do first for the storm?</span><span class="chip" style="cursor:pointer">What are we donating today?</span></div></div></div>
+</section>
+
+<!-- storm -->
+<section id="storm">
+ <div class="eyebrow">The twist</div><h2>Winter storm tomorrow, trucks delayed 48 hours</h2>
+ <p class="lead">The same seven steps run. Only the inputs change, and the system adapts on its own.</p>
+ <div class="row c4">
+  <div class="card"><h3>Forecast</h3><p class="sub">Storm features fire: a buying rush on bread, milk, eggs and meat today, a drop during the storm.</p></div>
+  <div class="card"><h3>Order window</h3><p class="sub">Stock must now last 3 days instead of 1. For essentials short of that, it asks for a same-day top-up and sets a 2-per-customer limit.</p></div>
+  <div class="card"><h3>Surplus</h3><p class="sub">Markdowns stop on essentials. Items whose sales drop in the storm, like sushi, go to markdown or donation sooner.</p></div>
+  <div class="card"><h3>Staff</h3><p class="sub">Adds tasks: release backroom stock in 3 rounds, bake extra bread in store, put up limit signs.</p></div>
+ </div>
+ <div style="margin-top:20px"><button class="seg2" style="font:inherit;padding:10px 16px;border-radius:8px;border:0;background:var(--red);color:#fff;cursor:pointer" onclick="load(true).then(()=>document.getElementById('s7').scrollIntoView())">Switch to storm and open the manager plan →</button></div>
+</section>
+
+<!-- results -->
+<section id="results">
+ <div class="eyebrow">Testing</div><h2>Does it work? A fair test against the current rule</h2>
+ <p class="lead">We trained the models only on data from before each test period, then replayed those days. Both approaches saw the same customers, same shelf lives and same truck delays.</p>
+ <div class="seg2" style="margin-bottom:14px"><button id="rN" class="on">Normal 4 weeks</button> <button id="rS">Snowstorm week (Jan 2026)</button> <span class="muted" id="rlabel" style="margin-left:8px"></span></div>
+ <div class="row c4" id="res"></div>
+ <div class="legend" style="margin-top:10px"><span><span class="sw" style="background:var(--gray)"></span>Current rule: same weekday last week + 10%, no markdowns or donations</span><span><span class="sw" style="background:var(--blue)"></span>FreshCast</span></div>
+</section>
+
+<!-- limits -->
+<section id="limits">
+ <div class="eyebrow">Limits and next steps</div><h2>What this prototype shows, and what it doesn't</h2>
+ <div class="row c2"><div class="card"><h3>Limits</h3><ul class="sub"><li>All data is simulated. Results show the approach works, not exact savings in a real store.</li><li>The "current rule" is a simple stand-in, not Walmart's actual ordering system.</li><li>Shelf lives, task minutes and donation rates are assumptions.</li></ul></div>
+ <div class="card"><h3>Next steps</h3><ul class="sub"><li>Pilot in a few stores with real sales and shelf-camera data.</li><li>Switch to gradient-boosted trees and update forecasts during the day as sales come in.</li><li>Move stock between nearby stores when one has extra.</li><li>Connect donation notices to food banks' scheduling systems.</li></ul></div></div>
+</section>
+
+<script>
+let PL={},storm=false,store=null,mode='recent',cur=0,pi=1;
+const $=id=>document.getElementById(id), fmt=n=>Math.round(n).toLocaleString();
+const secs=[...document.querySelectorAll('section')];
+$('nav').innerHTML=secs.map(s=>`<a href="#${s.id}" title="${s.querySelector('.eyebrow').textContent}"></a>`).join('');
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){cur=secs.indexOf(e.target);[...$('nav').children].forEach((a,i)=>a.classList.toggle('on',i==cur))}}),{threshold:.4});secs.forEach(s=>io.observe(s));
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT'].includes(e.target.tagName))return;if(['ArrowDown','PageDown','ArrowRight'].includes(e.key)){e.preventDefault();secs[Math.min(cur+1,secs.length-1)].scrollIntoView()}if(['ArrowUp','PageUp','ArrowLeft'].includes(e.key)){e.preventDefault();secs[Math.max(cur-1,0)].scrollIntoView()}});
+
+async function load(s){storm=s;if(!PL[s])PL[s]=await (await fetch('/api/plan?storm='+(s?1:0))).json();
+ $('bN').classList.toggle('on',!s);$('bS').classList.toggle('on',s);$('banner').style.display=s?'block':'none';
+ const D=PL[s];if(!store){Object.keys(D.stores).forEach(k=>$('store').add(new Option(k,k)));store=$('store').value;hero(D);results();side(D);
+  D.stores[store].rows.forEach((r,i)=>$('psel').add(new Option(r.product,i)))}
+ render()}
+$('bN').onclick=()=>load(false);$('bS').onclick=()=>load(true);$('store').onchange=e=>{store=e.target.value;render()};$('psel').onchange=e=>pick(+e.target.value);
+
+function hero(D){const t=D.backtest.recent.tool,c=D.backtest.recent.current;
+ $('hero').innerHTML=[[`${Math.round(100*(1-t.waste_usd/c.waste_usd))}% less`,'food thrown away'],[`${c.fill}% → ${t.fill}%`,'of customer demand met (shelves in stock)'],[`${fmt(t.donated_kg)} kg`,'of food sent to food banks instead of the landfill']].map(x=>`<div class="card"><div class="big">${x[0]}</div><div class="sub">${x[1]}</div></div>`).join('')}
+
+function render(){const D=PL[storm],S=D.stores[store],k=S.kpi,stormN=S.actions.filter(a=>a.group=='Storm').length;
+ $('kpis').innerHTML=[storm?[stormN,'storm actions']:[k.orders,'items to order'],[storm?'0':k.cases,storm?'trucks arriving (delayed)':'cases arriving tomorrow'],[k.markdowns,'markdowns'],[k.donate_kg+' kg','set aside for donation'],[k.hours+' h','staff time needed']].map(x=>`<div class="card"><div class="big" style="font-size:28px">${x[0]}</div><div class="sub">${x[1]}</div></div>`).join('');
+ $('acts').innerHTML=S.actions.map(a=>`<label class="act"><input type="checkbox"><span class="tag ${a.group}">${a.group.toUpperCase()}</span><div><b style="font-weight:600">${a.title}</b><div class="sub">${a.detail}</div></div></label>`).join('')||'<p class="sub">Nothing to do.</p>';
+ const mx=Math.max(...Object.values(S.labor),.1);
+ $('labor').innerHTML=Object.entries(S.labor).map(([t,h])=>`<div class="b"><span class="lab">${t}</span><div class="bar" style="background:var(--blue);width:${Math.max(h/mx*45,.5)}%"></div><span>${h} h</span></div>`).join('')+`<p class="sub" style="margin-top:10px"><b>Total: ${k.hours} associate-hours</b></p>`;
+ $('tbl').innerHTML=S.rows.map((r,i)=>`<tr data-i="${i}"><td>${r.product}</td><td class="n">${r.on_hand}</td><td class="n">${r.usable}</td><td class="n">${r.fc}</td><td class="n">${r.lo}–${r.hi}</td><td class="n">${r.sl}%</td><td class="n"><b>${r.cases?r.cases+' cs ('+r.order+')':'—'}</b></td></tr>`).join('');
+ [...$('tbl').children].forEach(tr=>tr.onclick=()=>pick(+tr.dataset.i));pick(pi);
+ $('md').innerHTML=S.markdowns.length?`<table><tr><th>Item</th><th>Units</th><th>Expires</th><th>Likely left over</th><th>Discount</th><th>$ recovered</th></tr>${S.markdowns.map(m=>`<tr><td>${m.product}</td><td class="n">${m.units}</td><td>${m.expires}</td><td class="n">${m.unsold}</td><td class="n">${m.disc}%</td><td class="n">$${m.recover}</td></tr>`).join('')}</table>`:'<p class="sub">No markdowns needed today.</p>';
+ $('don').innerHTML=S.donations.length?`<table><tr><th>Item</th><th>Amount</th><th>Partner</th><th>Pickup</th><th></th></tr>${S.donations.map(d=>`<tr><td>${d.product}</td><td class="n">${d.units} (${d.kg} kg)</td><td>${d.partner}<div class="muted">${d.miles} mi${d.cold?' · cold storage':''}</div></td><td>${d.pickup}</td><td><button onclick="this.textContent='Sent ✓';this.disabled=true">Notify</button></td></tr>`).join('')}</table><p class="muted">Demo only: "Notify" doesn't send anything.</p>`:'<p class="sub">No surplus expected.</p>'}
+
+function pick(i){pi=i;const r=PL[storm].stores[store].rows[i];$('psel').value=i;[...$('tbl').children].forEach((t,j)=>t.classList.toggle('sel',j==i));
+ $('ptitle').textContent=r.product+' · '+store.split(' ·')[0]+(storm?' · storm':'');
+ const h=r.hist,W=560,H=210,L=34,B=24,n=h.length+14,mx=Math.max(...h,...r.f90,1)*1.08,x=j=>L+j*(W-L-10)/(n-1),y=v=>H-B-v/mx*(H-B-10);
+ const band='M'+r.f90.map((v,j)=>x(h.length+j)+','+y(v)).join('L')+'L'+r.f10.map((v,j)=>x(h.length+j)+','+y(v)).reverse().join('L')+'Z';
+ const ticks=[0,mx/2,mx/1.08].map(v=>`<line x1="${L}" x2="${W-10}" y1="${y(v)}" y2="${y(v)}" stroke="#eeede8"/><text x="0" y="${y(v)+4}">${Math.round(v)}</text>`).join('');
+ const hits=h.map((v,j)=>`<circle cx="${x(j)}" cy="${y(v)}" r="6" fill="transparent"><title>${v} sold</title></circle>`).join('')+r.f50.map((v,j)=>`<circle cx="${x(h.length+j)}" cy="${y(v)}" r="6" fill="transparent"><title>Day +${j}: ~${Math.round(v)} (range ${Math.round(r.f10[j])}–${Math.round(r.f90[j])})</title></circle>`).join('');
+ $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%">${ticks}<line x1="${x(h.length-.5)}" x2="${x(h.length-.5)}" y1="6" y2="${H-B}" stroke="#c3c2b7"/><text x="${x(h.length-.5)+4}" y="14">today</text><text x="${L}" y="${H-6}">6 weeks ago</text><text x="${W-60}" y="${H-6}">+14 days</text>
+ <path d="${band}" fill="#eb6834" opacity=".22"/><polyline fill="none" stroke="#2a78d6" stroke-width="2" points="${h.map((v,j)=>x(j)+','+y(v)).join(' ')}"/><polyline fill="none" stroke="#eb6834" stroke-width="2" points="${r.f50.map((v,j)=>x(h.length+j)+','+y(v)).join(' ')}"/>${hits}</svg>`;
+ const dm=Math.max(...r.drivers.map(d=>Math.abs(d[1])),1);
+ $('drivers').innerHTML=r.drivers.length?r.drivers.map(([g,v])=>`<div class="b"><span class="lab">${g}</span><div class="bar" style="background:${v>0?'var(--blue)':'var(--orange)'};width:${Math.abs(v)/dm*40}%"></div><span>${v>0?'+':''}${v}%</span></div>`).join('')+'<p class="muted">Change vs. a typical day for this item.</p>':'<p class="sub">A typical day: no special factors.</p>';
+ $('perr').textContent=`Measured error for this item on 4 weeks it wasn't trained on: about ±${r.err}% per day.`;
+ const sd=Math.max(1,(r.hi-r.lo)/2.56), z=((r.hi+r.lo)/2>0)?null:null, tgt=Math.round(r.usable+r.order);
+ $('wxname').textContent=r.product;
+ $('wx').innerHTML=`<table>
+ <tr><td>Expected sales ${storm?'(today → Saturday)':'(tomorrow)'}</td><td class="n">${r.fc}</td></tr>
+ <tr><td>Uncertainty (likely range ${r.lo}–${r.hi})</td><td class="n">± ${Math.round(sd*1.28)}</td></tr>
+ <tr><td>Target in-stock level for this item</td><td class="n">${r.sl}%</td></tr>
+ <tr><td>→ Stock target (expected + safety margin)</td><td class="n">${r.target}</td></tr>
+ <tr><td>Usable stock on hand</td><td class="n">− ${r.usable}</td></tr>
+ <tr><td><b>${storm?'Shortfall (no trucks for 48h)':'Order'}</b></td><td class="n"><b>${storm?Math.max(0,r.target-r.usable)+' units':(r.cases?r.cases+' case'+(r.cases>1?'s':'')+' × '+r.case+' = '+r.order+' units':'none needed')}</b></td></tr></table>
+ <p class="muted">Chance of running out ${storm?'before trucks return':'tomorrow'}: about ${r.stockout_risk}%. Shelf life: ${r.shelf} day${r.shelf>1?'s':''}.${storm?' With no trucks, essentials short of stock get a top-up request in the manager plan.':''}</p>`}
+
+function results(){const D=PL[false]||PL[storm],b=D.backtest[mode],t=b.tool,c=b.current;
+ $('rN').classList.toggle('on',mode=='recent');$('rS').classList.toggle('on',mode=='storm');$('rlabel').textContent=mode=='recent'?D.backtest.recent_label:D.backtest.storm_label;
+ const m=[['Food thrown away','$',c.waste_usd,t.waste_usd,'lower is better'],['Customer demand met','%',c.fill,t.fill,'higher is better'],['Sales lost to empty shelves','u',c.lost,t.lost,'units · lower is better'],['Gross profit','$',c.profit,t.profit,'higher is better']];
+ $('res').innerHTML=m.map(([n,u,a,bv,note])=>{const mx=Math.max(a,bv,1),f=v=>u=='$'?'$'+fmt(v):u=='%'?v+'%':fmt(v);
+  return `<div class="card"><h3>${n}</h3><div class="bars"><div class="b"><div class="bar" style="background:var(--gray);width:${a/mx*65}%"></div><span>${f(a)}</span></div><div class="b"><div class="bar" style="background:var(--blue);width:${bv/mx*65}%"></div><span><b>${f(bv)}</b></span></div></div><div class="muted">${note}</div></div>`}).join('')+
+  `<div class="card" style="grid-column:1/-1"><span class="sub">Food donated instead of thrown away: <b>${fmt(t.donated_kg)} kg</b> with FreshCast vs. ${fmt(c.donated_kg)} kg with the current rule. All 3 stores combined.</span></div>`}
+$('rN').onclick=()=>{mode='recent';results()};$('rS').onclick=()=>{mode='storm';results()};
+
+function side(D){$('ev').innerHTML=D.events.map(e=>`<div style="margin:8px 0"><b>${e.event}</b> <span class="muted">${e.date} · in ${e.days} days</span><div class="sub">${e.products.join(', ')||'small effect'}</div></div>`).join('');
+ $('tr').innerHTML=D.trends.map(t=>{const s=t.series,pts=s.map((v,j)=>`${j*110/(s.length-1)},${30-v/100*28}`).join(' ');
+  return `<div style="display:flex;gap:12px;align-items:center"><svg width="110" height="32" style="flex:none"><polyline fill="none" stroke="${t.wk>10?'#d03b3b':'#2a78d6'}" stroke-width="2" points="${pts}"/></svg><div><b>${t.topic}</b> <span class="muted">score ${t.now}, ${t.wk>=0?'up':'down'} ${Math.abs(t.wk)} this week</span><div class="sub">Linked to ${t.products.join(', ')}${t.effect>3?` · about +${t.effect}% demand now`:''}</div></div></div>`}).join('')}
+
+async function ask(q){if(!q)return;$('log').innerHTML+=`<div class="msg me">${q}</div>`;$('q').value='';
+ const w=document.createElement('div');w.className='msg bot muted';w.textContent='Thinking…';$('log').appendChild(w);$('log').scrollTop=1e6;
+ const r=await (await fetch('/api/ask',{method:'POST',body:JSON.stringify({q,store,storm})})).json();w.remove();
+ $('log').innerHTML+=`<div class="msg bot">${r.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}<div class="muted">Answered by ${r.source}</div></div>`;$('log').scrollTop=1e6}
+$('ask').onclick=()=>ask($('q').value);$('q').onkeydown=e=>{if(e.key=='Enter')ask($('q').value)};
+document.querySelectorAll('#sugg .chip').forEach(c=>c.onclick=()=>ask(c.textContent));
+load(false);
+</script></body></html>
